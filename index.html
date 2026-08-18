@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceFlow</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0f;
+      color: white;
+      text-align: center;
+    }
+
+    header {
+      padding: 20px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    video {
+      width: 100%;
+      max-height: 500px;
+      background: #17171d;
+      border-radius: 18px;
+      object-fit: cover;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #000000;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    input {
+      width: 100%;
+      margin-top: 15px;
+      padding: 12px 0;
+    }
+
+    .status {
+      margin-top: 15px;
+      color: #aaa;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>FaceFlow</header>
+
+  <div class="container">
+
+    <video id="camera" autoplay playsinline></video>
+
+    <input id="faceInput" type="file" accept="image/*">
+
+    <button onclick="startCamera()">
+      Start Camera
+    </button>
+
+    <button onclick="startFaceSwap()">
+      Start Face Swap
+    </button>
+
+    <button onclick="stopCamera()">
+      Stop
+    </button>
+
+    <div class="status" id="status">
+      Ready
+    </div>
+
+  </div>
+
+  <script>
+    let stream;
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+
+        document.getElementById("camera").srcObject = stream;
+
+        document.getElementById("status").innerText =
+          "Camera started";
+      } catch (error) {
+        document.getElementById("status").innerText =
+          "Camera permission was denied";
+      }
+    }
+
+    function startFaceSwap() {
+      document.getElementById("status").innerText =
+        "Face swap engine will be connected here";
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        document.getElementById("camera").srcObject = null;
+      }
+
+      document.getElementById("status").innerText =
+        "Camera stopped";
+    }
+  </script>
+
+</body>
+</html>
