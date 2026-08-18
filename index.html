@@ -37,16 +37,17 @@
       gap: 18px;
     }
 
-    .panel {
+    .panel,
+    .avatar-section {
       background: #121219;
-      padding: 10px;
+      padding: 14px;
       border-radius: 18px;
     }
 
     .title {
       font-size: 14px;
       color: #aaa;
-      margin: 4px 4px 10px;
+      margin-bottom: 10px;
     }
 
     .screen {
@@ -66,226 +67,28 @@
       display: block;
     }
 
-    button {
-      width: 100%;
-      padding: 15px;
-      margin-top: 12px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .start {
-      background: white;
-      color: black;
-    }
-
-    .swap {
-      background: #6c4cff;
-      color: white;
-    }
-
-    .fullscreen {
-      background: #24242d;
-      color: white;
-    }
-
-    .stop {
-      background: #24242d;
-      color: white;
-    }
-
     .avatar-section {
-      background: #121219;
       margin-top: 20px;
-      padding: 18px;
-      border-radius: 18px;
       text-align: center;
     }
 
     .avatar-title {
-      font-size: 18px;
+      font-size: 19px;
       font-weight: bold;
-      margin-bottom: 12px;
-    }
-
-    #avatarPreview {
-      width: 130px;
-      height: 130px;
-      object-fit: cover;
-      border-radius: 50%;
-      display: none;
-      margin: 15px auto;
-      border: 3px solid #6c4cff;
+      margin-bottom: 14px;
     }
 
     #avatarInput {
       width: 100%;
-      padding: 12px;
-      border-radius: 10px;
+      padding: 13px;
       background: #1c1c25;
       color: white;
+      border-radius: 10px;
+      border: 1px solid #33333d;
     }
 
-    .remove {
-      background: #292932;
-      color: white;
+    #avatarPreviewBox {
       display: none;
-    }
-
-    #status {
-      text-align: center;
-      color: #aaa;
-      padding: 16px 0;
-    }
-
-    @media (min-width: 700px) {
-      .views {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-<header>FaceFlow</header>
-
-<div class="container">
-
-  <!-- INPUT AND OUTPUT -->
-
-  <div class="views">
-
-    <div class="panel">
-
-      <div class="title">
-        INPUT CAMERA
-      </div>
-
-      <div class="screen">
-
-        <video
-          id="inputVideo"
-          autoplay
-          playsinline
-          muted>
-        </video>
-
-      </div>
-
-    </div>
-
-
-    <div class="panel">
-
-      <div class="title">
-        OUTPUT
-      </div>
-
-      <div
-        class="screen"
-        id="outputScreen">
-
-        <canvas id="outputCanvas"></canvas>
-
-      </div>
-
-      <button
-        class="fullscreen"
-        onclick="fullscreenOutput()">
-
-        Full Screen Output
-
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- AVATAR -->
-
-  <div class="avatar-section">
-
-    <div class="avatar-title">
-      Choose Avatar
-    </div>
-
-    <input
-      id="avatarInput"
-      type="file"
-      accept="image/*">
-
-    <img
-      id="avatarPreview"
-      alt="Selected Avatar">
-
-    <button
-      id="removeAvatar"
-      class="remove"
-      onclick="removeAvatar()">
-
-      Remove Avatar
-
-    </button>
-
-  </div>
-
-
-  <!-- CONTROLS -->
-
-  <button
-    class="start"
-    onclick="startCamera()">
-
-    Start Camera
-
-  </button>
-
-
-  <button
-    class="swap"
-    onclick="startFaceSwap()">
-
-    Start Face Swap
-
-  </button>
-
-
-  <button
-    class="stop"
-    onclick="stopCamera()">
-
-    Stop
-
-  </button>
-
-
-  <div id="status">
-    Ready
-  </div>
-
-</div>
-
-
-<script>
-
-  let stream = null;
-
-  const inputVideo =
-    document.getElementById("inputVideo");
-
-  const outputCanvas =
-    document.getElementById("outputCanvas");
-
-  const outputScreen =
-    document.getElementById("outputScreen");
-
-  const avatarInput =
-    document.getElementById("avatarInput");
-
-  const avatarPreview =
-    document.get
+      margin-top: 18px;
+      padding: 16px;
+     
