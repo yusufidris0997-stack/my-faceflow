@@ -66,10 +66,6 @@
       display: block;
     }
 
-    #outputCanvas {
-      display: none;
-    }
-
     button {
       width: 100%;
       padding: 15px;
@@ -78,6 +74,7 @@
       border-radius: 12px;
       font-size: 16px;
       font-weight: bold;
+      cursor: pointer;
     }
 
     .start {
@@ -100,6 +97,44 @@
       color: white;
     }
 
+    .avatar-section {
+      background: #121219;
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 18px;
+      text-align: center;
+    }
+
+    .avatar-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #avatarPreview {
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 50%;
+      display: none;
+      margin: 15px auto;
+      border: 3px solid #6c4cff;
+    }
+
+    #avatarInput {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      background: #1c1c25;
+      color: white;
+    }
+
+    .remove {
+      background: #292932;
+      color: white;
+      display: none;
+    }
+
     #status {
       text-align: center;
       color: #aaa;
@@ -120,9 +155,9 @@
 
 <div class="container">
 
-  <div class="views">
+  <!-- INPUT AND OUTPUT -->
 
-    <!-- INPUT CAMERA -->
+  <div class="views">
 
     <div class="panel">
 
@@ -131,18 +166,18 @@
       </div>
 
       <div class="screen">
+
         <video
           id="inputVideo"
           autoplay
           playsinline
           muted>
         </video>
+
       </div>
 
     </div>
 
-
-    <!-- OUTPUT CAMERA -->
 
     <div class="panel">
 
@@ -170,6 +205,37 @@
 
   </div>
 
+
+  <!-- AVATAR -->
+
+  <div class="avatar-section">
+
+    <div class="avatar-title">
+      Choose Avatar
+    </div>
+
+    <input
+      id="avatarInput"
+      type="file"
+      accept="image/*">
+
+    <img
+      id="avatarPreview"
+      alt="Selected Avatar">
+
+    <button
+      id="removeAvatar"
+      class="remove"
+      onclick="removeAvatar()">
+
+      Remove Avatar
+
+    </button>
+
+  </div>
+
+
+  <!-- CONTROLS -->
 
   <button
     class="start"
@@ -218,160 +284,8 @@
   const outputScreen =
     document.getElementById("outputScreen");
 
-  const ctx =
-    outputCanvas.getContext("2d");
+  const avatarInput =
+    document.getElementById("avatarInput");
 
-  const status =
-    document.getElementById("status");
-
-
-  async function startCamera() {
-
-    try {
-
-      status.innerText =
-        "Requesting camera...";
-
-      stream =
-        await navigator.mediaDevices.getUserMedia({
-
-          video: {
-            facingMode: "user"
-          },
-
-          audio: false
-
-        });
-
-      inputVideo.srcObject =
-        stream;
-
-      await inputVideo.play();
-
-      outputCanvas.style.display =
-        "block";
-
-      resizeOutput();
-
-      mirrorCamera();
-
-      status.innerText =
-        "Camera running";
-
-    }
-
-    catch (error) {
-
-      console.error(error);
-
-      status.innerText =
-        "Camera permission was denied";
-
-    }
-
-  }
-
-
-  function resizeOutput() {
-
-    if (!inputVideo.videoWidth) return;
-
-    outputCanvas.width =
-      inputVideo.videoWidth;
-
-    outputCanvas.height =
-      inputVideo.videoHeight;
-
-  }
-
-
-  function mirrorCamera() {
-
-    if (!stream) return;
-
-    resizeOutput();
-
-    ctx.save();
-
-    ctx.scale(-1, 1);
-
-    ctx.drawImage(
-      inputVideo,
-      -outputCanvas.width,
-      0,
-      outputCanvas.width,
-      outputCanvas.height
-    );
-
-    ctx.restore();
-
-    requestAnimationFrame(
-      mirrorCamera
-    );
-
-  }
-
-
-  function startFaceSwap() {
-
-    if (!stream) {
-
-      status.innerText =
-        "Start the camera first";
-
-      return;
-
-    }
-
-    status.innerText =
-      "Face-swap engine will be connected here";
-
-  }
-
-
-  function stopCamera() {
-
-    if (stream) {
-
-      stream
-        .getTracks()
-        .forEach(track =>
-          track.stop()
-        );
-
-      stream = null;
-
-    }
-
-    inputVideo.srcObject =
-      null;
-
-    ctx.clearRect(
-      0,
-      0,
-      outputCanvas.width,
-      outputCanvas.height
-    );
-
-    status.innerText =
-      "Camera stopped";
-
-  }
-
-
-  function fullscreenOutput() {
-
-    if (
-      outputScreen.requestFullscreen
-    ) {
-
-      outputScreen.requestFullscreen();
-
-    }
-
-  }
-
-</script>
-
-</body>
-</html>
+  const avatarPreview =
+    document.get
