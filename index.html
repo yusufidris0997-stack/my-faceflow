@@ -1,62 +1,105 @@
-<!DOCTYPE html>
-<html>
+          "Camera permission was denied";
+   <!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>FaceFlow</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #0b0b0f;
+      background: #08080c;
       color: white;
-      text-align: center;
     }
 
     header {
-      padding: 20px;
-      font-size: 28px;
+      padding: 22px;
+      text-align: center;
+      font-size: 30px;
       font-weight: bold;
     }
 
     .container {
-      max-width: 600px;
+      width: 92%;
+      max-width: 650px;
       margin: auto;
-      padding: 20px;
+    }
+
+    .preview {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #15151c;
+      border-radius: 18px;
+      overflow: hidden;
     }
 
     video {
       width: 100%;
-      max-height: 500px;
-      background: #17171d;
-      border-radius: 18px;
+      height: 100%;
       object-fit: cover;
     }
 
-    button {
-      width: 100%;
-      padding: 16px;
-      margin-top: 15px;
-      border: none;
-      border-radius: 12px;
-      background: #ffffff;
-      color: #000000;
-      font-size: 17px;
-      font-weight: bold;
+    .face-preview {
+      margin-top: 18px;
+      text-align: center;
     }
 
-    button:active {
-      transform: scale(0.98);
+    .face-preview img {
+      width: 110px;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 50%;
+      display: none;
+      margin: auto;
+      border: 3px solid white;
     }
 
     input {
       width: 100%;
-      margin-top: 15px;
-      padding: 12px 0;
+      margin-top: 18px;
+      padding: 12px;
+      background: #15151c;
+      color: white;
+      border-radius: 10px;
     }
 
-    .status {
-      margin-top: 15px;
+    button {
+      width: 100%;
+      margin-top: 14px;
+      padding: 16px;
+      border: 0;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .start {
+      background: white;
+      color: black;
+    }
+
+    .swap {
+      background: #6c4cff;
+      color: white;
+    }
+
+    .stop {
+      background: #292932;
+      color: white;
+    }
+
+    #status {
+      text-align: center;
+      margin: 18px 0;
       color: #aaa;
     }
   </style>
@@ -66,48 +109,128 @@
 
   <header>FaceFlow</header>
 
-  <div class="container">
+  <main class="container">
 
-    <video id="camera" autoplay playsinline></video>
+    <div class="preview">
+      <video id="camera" autoplay playsinline></video>
+    </div>
 
-    <input id="faceInput" type="file" accept="image/*">
+    <div class="face-preview">
+      <img id="facePreview" alt="Selected face">
+    </div>
 
-    <button onclick="startCamera()">
+    <input
+      id="faceInput"
+      type="file"
+      accept="image/*"
+    >
+
+    <button class="start" onclick="startCamera()">
       Start Camera
     </button>
 
-    <button onclick="startFaceSwap()">
+    <button class="swap" onclick="startFaceSwap()">
       Start Face Swap
     </button>
 
-    <button onclick="stopCamera()">
+    <button class="stop" onclick="stopCamera()">
       Stop
     </button>
 
-    <div class="status" id="status">
+    <div id="status">
       Ready
     </div>
 
-  </div>
+  </main>
 
   <script>
-    let stream;
+
+    let stream = null;
+
+    const camera = document.getElementById("camera");
+    const faceInput = document.getElementById("faceInput");
+    const facePreview = document.getElementById("facePreview");
+    const status = document.getElementById("status");
 
     async function startCamera() {
+
       try {
+
         stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+          video: {
+            facingMode: "user"
+          },
           audio: false
         });
 
-        document.getElementById("camera").srcObject = stream;
+        camera.srcObject = stream;
 
-        document.getElementById("status").innerText =
-          "Camera started";
+        status.innerText = "Camera is running";
+
       } catch (error) {
-        document.getElementById("status").innerText =
+
+        status.innerText =
           "Camera permission was denied";
+
       }
+
+    }
+
+    faceInput.addEventListener("change", function () {
+
+      const file = this.files[0];
+
+      if (!file) return;
+
+      const imageURL = URL.createObjectURL(file);
+
+      facePreview.src = imageURL;
+
+      facePreview.style.display = "block";
+
+      status.innerText = "Face selected";
+
+    });
+
+    function startFaceSwap() {
+
+      if (!faceInput.files.length) {
+
+        status.innerText =
+          "Choose a face first";
+
+        return;
+
+      }
+
+      status.innerText =
+        "Face-swap AI is ready to be connected";
+
+    }
+
+    function stopCamera() {
+
+      if (stream) {
+
+        stream.getTracks().forEach(track => {
+          track.stop();
+        });
+
+        stream = null;
+
+      }
+
+      camera.srcObject = null;
+
+      status.innerText =
+        "Camera stopped";
+
+    }
+
+  </script>
+
+</body>
+</html>   }
     }
 
     function startFaceSwap() {
