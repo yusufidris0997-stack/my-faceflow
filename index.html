@@ -91,4 +91,448 @@
       display: none;
       margin-top: 18px;
       padding: 16px;
-     
+      background: #1c1c25;
+      border-radius: 15px;
+    }
+
+    #avatarStatus {
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #avatarPreview {
+      width: 180px;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 14px;
+      display: block;
+      margin: auto;
+    }
+
+    #avatarName {
+      margin-top: 12px;
+      color: #aaa;
+      word-break: break-word;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .start {
+      background: white;
+      color: black;
+    }
+
+    .swap {
+      background: #6c4cff;
+      color: white;
+    }
+
+    .fullscreen,
+    .stop,
+    .remove {
+      background: #292932;
+      color: white;
+    }
+
+    #status {
+      text-align: center;
+      color: #aaa;
+      padding: 16px 0;
+    }
+
+    @media (min-width: 700px) {
+      .views {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>FaceFlow</header>
+
+<div class="container">
+
+  <!-- CAMERA VIEWS -->
+
+  <div class="views">
+
+    <div class="panel">
+
+      <div class="title">
+        INPUT CAMERA
+      </div>
+
+      <div class="screen">
+
+        <video
+          id="inputVideo"
+          autoplay
+          playsinline
+          muted>
+        </video>
+
+      </div>
+
+    </div>
+
+
+    <div class="panel">
+
+      <div class="title">
+        OUTPUT
+      </div>
+
+      <div
+        class="screen"
+        id="outputScreen">
+
+        <canvas id="outputCanvas"></canvas>
+
+      </div>
+
+      <button
+        class="fullscreen"
+        onclick="fullscreenOutput()">
+
+        Full Screen Output
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- AVATAR -->
+
+  <div class="avatar-section">
+
+    <div class="avatar-title">
+      Choose Avatar
+    </div>
+
+    <input
+      id="avatarInput"
+      type="file"
+      accept="image/*">
+
+    <div id="avatarPreviewBox">
+
+      <div id="avatarStatus">
+        Avatar Selected ✓
+      </div>
+
+      <img
+        id="avatarPreview"
+        alt="Selected Avatar">
+
+      <div id="avatarName"></div>
+
+      <button
+        class="remove"
+        onclick="removeAvatar()">
+
+        Remove Avatar
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- CONTROLS -->
+
+  <button
+    class="start"
+    onclick="startCamera()">
+
+    Start Camera
+
+  </button>
+
+
+  <button
+    class="swap"
+    onclick="startFaceSwap()">
+
+    Start Face Swap
+
+  </button>
+
+
+  <button
+    class="stop"
+    onclick="stopCamera()">
+
+    Stop
+
+  </button>
+
+
+  <div id="status">
+    Ready
+  </div>
+
+</div>
+
+
+<script>
+
+  let stream = null;
+
+  const inputVideo =
+    document.getElementById("inputVideo");
+
+  const outputCanvas =
+    document.getElementById("outputCanvas");
+
+  const outputScreen =
+    document.getElementById("outputScreen");
+
+  const avatarInput =
+    document.getElementById("avatarInput");
+
+  const avatarPreview =
+    document.getElementById("avatarPreview");
+
+  const avatarPreviewBox =
+    document.getElementById("avatarPreviewBox");
+
+  const avatarName =
+    document.getElementById("avatarName");
+
+  const ctx =
+    outputCanvas.getContext("2d");
+
+  const status =
+    document.getElementById("status");
+
+
+  /* CAMERA */
+
+  async function startCamera() {
+
+    try {
+
+      status.innerText =
+        "Requesting camera...";
+
+      stream =
+        await navigator.mediaDevices.getUserMedia({
+
+          video: {
+            facingMode: "user"
+          },
+
+          audio: false
+
+        });
+
+      inputVideo.srcObject =
+        stream;
+
+      await inputVideo.play();
+
+      resizeOutput();
+
+      mirrorCamera();
+
+      status.innerText =
+        "Camera running";
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      status.innerText =
+        "Camera permission was denied";
+
+    }
+
+  }
+
+
+  /* OUTPUT */
+
+  function resizeOutput() {
+
+    if (!inputVideo.videoWidth) return;
+
+    outputCanvas.width =
+      inputVideo.videoWidth;
+
+    outputCanvas.height =
+      inputVideo.videoHeight;
+
+  }
+
+
+  function mirrorCamera() {
+
+    if (!stream) return;
+
+    resizeOutput();
+
+    ctx.save();
+
+    ctx.scale(-1, 1);
+
+    ctx.drawImage(
+      inputVideo,
+      -outputCanvas.width,
+      0,
+      outputCanvas.width,
+      outputCanvas.height
+    );
+
+    ctx.restore();
+
+    requestAnimationFrame(
+      mirrorCamera
+    );
+
+  }
+
+
+  /* AVATAR */
+
+  avatarInput.addEventListener(
+    "change",
+    function() {
+
+      const file =
+        this.files[0];
+
+      if (!file) return;
+
+      const imageURL =
+        URL.createObjectURL(file);
+
+      avatarPreview.src =
+        imageURL;
+
+      avatarPreviewBox.style.display =
+        "block";
+
+      avatarName.innerText =
+        file.name;
+
+      status.innerText =
+        "Avatar selected ✓";
+
+    }
+  );
+
+
+  function removeAvatar() {
+
+    avatarInput.value =
+      "";
+
+    avatarPreview.src =
+      "";
+
+    avatarPreviewBox.style.display =
+      "none";
+
+    avatarName.innerText =
+      "";
+
+    status.innerText =
+      "Avatar removed";
+
+  }
+
+
+  /* FACE SWAP */
+
+  function startFaceSwap() {
+
+    if (!stream) {
+
+      status.innerText =
+        "Start the camera first";
+
+      return;
+
+    }
+
+    if (!avatarInput.files.length) {
+
+      status.innerText =
+        "Choose an avatar first";
+
+      return;
+
+    }
+
+    status.innerText =
+      "Face-swap engine will be connected here";
+
+  }
+
+
+  /* STOP */
+
+  function stopCamera() {
+
+    if (stream) {
+
+      stream
+        .getTracks()
+        .forEach(
+          track => track.stop()
+        );
+
+      stream = null;
+
+    }
+
+    inputVideo.srcObject =
+      null;
+
+    ctx.clearRect(
+      0,
+      0,
+      outputCanvas.width,
+      outputCanvas.height
+    );
+
+    status.innerText =
+      "Camera stopped";
+
+  }
+
+
+  /* FULL SCREEN */
+
+  function fullscreenOutput() {
+
+    if (
+      outputScreen.requestFullscreen
+    ) {
+
+      outputScreen.requestFullscreen();
+
+    }
+
+  }
+
+</script>
+
+</body>
+</html>
