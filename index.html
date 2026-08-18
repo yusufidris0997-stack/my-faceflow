@@ -67,6 +67,10 @@
       display: block;
     }
 
+    #inputVideo {
+      transform: scaleX(-1);
+    }
+
     .avatar-section {
       margin-top: 20px;
       text-align: center;
@@ -288,9 +292,19 @@
 </div>
 
 
-<script>
+<script type="module">
+
+  import {
+    FaceDetector,
+    FilesetResolver
+  } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm";
+
 
   let stream = null;
+  let detector = null;
+  let detecting = false;
+  let lastVideoTime = -1;
+
 
   const inputVideo =
     document.getElementById("inputVideo");
@@ -320,37 +334,41 @@
     document.getElementById("status");
 
 
-  /* CAMERA */
+  /*
+    LOAD FACE DETECTOR
+  */
 
-  async function startCamera() {
+  async function loadDetector() {
 
     try {
 
       status.innerText =
-        "Requesting camera...";
+        "Preparing face detection...";
 
-      stream =
-        await navigator.mediaDevices.getUserMedia({
+      const vision =
+        await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
+        );
 
-          video: {
-            facingMode: "user"
-          },
 
-          audio: false
+      detector =
+        await FaceDetector.createFromOptions(
+          vision,
+          {
+            baseOptions: {
+              modelAssetPath:
+                "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite"
+            },
 
-        });
+            runningMode: "VIDEO",
 
-      inputVideo.srcObject =
-        stream;
+            minDetectionConfidence: 0.5
+          }
+        );
 
-      await inputVideo.play();
-
-      resizeOutput();
-
-      mirrorCamera();
 
       status.innerText =
-        "Camera running";
+        "Face detection ready ✓";
 
     }
 
@@ -359,16 +377,71 @@
       console.error(error);
 
       status.innerText =
-        "Camera permission was denied";
+        "Face detection could not load";
 
     }
 
   }
 
 
-  /* OUTPUT */
+  /*
+    START CAMERA
+  */
 
-  function resizeOutput() {
+  window.startCamera =
+    async function() {
+
+      try {
+
+        status.innerText =
+          "Requesting camera...";
+
+
+        stream =
+          await navigator.mediaDevices.getUserMedia({
+
+            video: {
+              facingMode: "user"
+            },
+
+            audio: false
+
+          });
+
+
+        inputVideo.srcObject =
+          stream;
+
+
+        await inputVideo.play();
+
+
+        resizeCanvas();
+
+
+        status.innerText =
+          "Camera running";
+
+
+      }
+
+      catch (error) {
+
+        console.error(error);
+
+        status.innerText =
+          "Camera permission was denied";
+
+      }
+
+    };
+
+
+  /*
+    RESIZE OUTPUT
+  */
+
+  function resizeCanvas() {
 
     if (!inputVideo.videoWidth) return;
 
@@ -381,11 +454,55 @@
   }
 
 
-  function mirrorCamera() {
+  /*
+    FACE DETECTION
+  */
 
-    if (!stream) return;
+  window.startFaceSwap =
+    function() {
 
-    resizeOutput();
+      if (!stream) {
+
+        status.innerText =
+          "Start the camera first";
+
+        return;
+
+      }
+
+
+      if (!detector) {
+
+        status.innerText =
+          "Face detector is not ready";
+
+        return;
+
+      }
+
+
+      detecting = true;
+
+      status.innerText =
+        "Looking for your face...";
+
+
+      detectFace();
+
+    };
+
+
+  async function detectFace() {
+
+    if (!detecting) return;
+
+
+    resizeCanvas();
+
+
+    /*
+      Draw the camera into the output.
+    */
 
     ctx.save();
 
@@ -401,14 +518,103 @@
 
     ctx.restore();
 
+
+    /*
+      Detect face.
+    */
+
+    if (
+      inputVideo.readyState >= 2 &&
+      inputVideo.currentTime !== lastVideoTime
+    ) {
+
+      lastVideoTime =
+        inputVideo.currentTime;
+
+
+      const results =
+        detector.detectForVideo(
+          inputVideo,
+          performance.now()
+        );
+
+
+      if (
+        results.detections &&
+        results.detections.length > 0
+      ) {
+
+        status.innerText =
+          "Face detected ✓";
+
+
+        const box =
+          results.detections[0].boundingBox;
+
+
+        /*
+          Mirror the detection
+          because the camera preview
+          is mirrored.
+        */
+
+        const x =
+          outputCanvas.width -
+          (box.originX + box.width);
+
+
+        const y =
+          box.originY;
+
+
+        const width =
+          box.width;
+
+
+        const height =
+          box.height;
+
+
+        /*
+          Draw detection box.
+        */
+
+        ctx.strokeStyle =
+          "#ffffff";
+
+        ctx.lineWidth =
+          4;
+
+
+        ctx.strokeRect(
+          x,
+          y,
+          width,
+          height
+        );
+
+      }
+
+      else {
+
+        status.innerText =
+          "Looking for your face...";
+
+      }
+
+    }
+
+
     requestAnimationFrame(
-      mirrorCamera
+      detectFace
     );
 
   }
 
 
-  /* AVATAR */
+  /*
+    AVATAR
+  */
 
   avatarInput.addEventListener(
     "change",
@@ -419,17 +625,22 @@
 
       if (!file) return;
 
+
       const imageURL =
         URL.createObjectURL(file);
+
 
       avatarPreview.src =
         imageURL;
 
+
       avatarPreviewBox.style.display =
         "block";
 
+
       avatarName.innerText =
         file.name;
+
 
       status.innerText =
         "Avatar selected ✓";
@@ -438,99 +649,96 @@
   );
 
 
-  function removeAvatar() {
+  window.removeAvatar =
+    function() {
 
-    avatarInput.value =
-      "";
-
-    avatarPreview.src =
-      "";
-
-    avatarPreviewBox.style.display =
-      "none";
-
-    avatarName.innerText =
-      "";
-
-    status.innerText =
-      "Avatar removed";
-
-  }
+      avatarInput.value =
+        "";
 
 
-  /* FACE SWAP */
+      avatarPreview.src =
+        "";
 
-  function startFaceSwap() {
 
-    if (!stream) {
+      avatarPreviewBox.style.display =
+        "none";
+
+
+      avatarName.innerText =
+        "";
+
 
       status.innerText =
-        "Start the camera first";
+        "Avatar removed";
 
-      return;
+    };
 
-    }
 
-    if (!avatarInput.files.length) {
+  /*
+    STOP
+  */
+
+  window.stopCamera =
+    function() {
+
+      detecting = false;
+
+
+      if (stream) {
+
+        stream
+          .getTracks()
+          .forEach(
+            track => track.stop()
+          );
+
+
+        stream = null;
+
+      }
+
+
+      inputVideo.srcObject =
+        null;
+
+
+      ctx.clearRect(
+        0,
+        0,
+        outputCanvas.width,
+        outputCanvas.height
+      );
+
 
       status.innerText =
-        "Choose an avatar first";
+        "Camera stopped";
 
-      return;
-
-    }
-
-    status.innerText =
-      "Face-swap engine will be connected here";
-
-  }
+    };
 
 
-  /* STOP */
+  /*
+    FULL SCREEN
+  */
 
-  function stopCamera() {
+  window.fullscreenOutput =
+    function() {
 
-    if (stream) {
+      if (
+        outputScreen.requestFullscreen
+      ) {
 
-      stream
-        .getTracks()
-        .forEach(
-          track => track.stop()
-        );
+        outputScreen.requestFullscreen();
 
-      stream = null;
+      }
 
-    }
-
-    inputVideo.srcObject =
-      null;
-
-    ctx.clearRect(
-      0,
-      0,
-      outputCanvas.width,
-      outputCanvas.height
-    );
-
-    status.innerText =
-      "Camera stopped";
-
-  }
+    };
 
 
-  /* FULL SCREEN */
+  /*
+    START LOADING THE DETECTOR
+  */
 
-  function fullscreenOutput() {
-
-    if (
-      outputScreen.requestFullscreen
-    ) {
-
-      outputScreen.requestFullscreen();
-
-    }
-
-  }
+  loadDetector();
 
 </script>
 
